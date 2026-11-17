@@ -1,0 +1,57 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "npm: compile",
+      "type": "npm",
+      "script": "compile",
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "watch",
+      "dependsOn": ["watch:bundle", "watch:types"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
+      "label": "watch:bundle",
+      "type": "npm",
+      "script": "watch",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "esbuild",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": [
+          { "regexp": "^✘ \\[ERROR\\] (.*)$", "message": 1 },
+          {
+            "regexp": "^\\s+(.+):(\\d+):(\\d+):$",
+            "file": 1,
+            "line": 2,
+            "column": 3
+          }
+        ],
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "\\[watch\\] build started",
+          "endsPattern": "\\[watch\\] build finished"
+        }
+      },
+      "presentation": { "reveal": "silent", "group": "watch" }
+    },
+    {
+      "label": "watch:types",
+      "type": "npm",
+      "script": "watch:types",
+      "isBackground": true,
+      "problemMatcher": "$tsc-watch",
+      "presentation": { "reveal": "silent", "group": "watch" }
+    },
+    {
+      "label": "build",
+      "type": "npm",
+      "script": "build",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": "$tsc"
+    }
+  ]
+}

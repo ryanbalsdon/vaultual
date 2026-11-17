@@ -1,0 +1,49 @@
+{
+  "name": "vaultual",
+  "displayName": "Vaultual",
+  "description": "A VS Code extension for a virtual workspace backed by a GPG-encrypted tar archive. Initial development skeleton.",
+  "version": "0.0.1",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.146.0",
+    "node": ">=26"
+  },
+  "categories": [
+    "Other"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "main": "./dist/extension.cjs",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vaultual.helloWorld",
+        "title": "Hello World",
+        "category": "Vaultual"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "npm run check && node esbuild.mjs --production",
+    "compile": "npm run typecheck && node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "watch:types": "tsc --noEmit --watch --preserveWatchOutput",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run compile && node --test test/unit/*.test.cjs",
+    "test:integration": "npm run compile && node test/run-integration.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run typecheck && npm run format:check",
+    "package": "vsce package --no-dependencies --allow-missing-repository --skip-license"
+  },
+  "devDependencies": {
+    "@types/vscode": ">=1.74.0 <1.147.0",
+    "@vscode/vsce": "latest",
+    "esbuild": "0.28.2",
+    "prettier": "latest",
+    "typescript": "7.0.2"
+  }
+}

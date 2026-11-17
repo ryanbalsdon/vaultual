@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.vsix
+.npm-cache/
+*.tsbuildinfo
+.DS_Store
+*.tar.gpg
+*.tar.gz.gpg
+.env
+.env.*
+!.env.example
