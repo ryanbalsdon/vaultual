@@ -1,10 +1,11 @@
 {
   "name": "vaultual",
   "displayName": "Vaultual",
+  "publisher": "ryanbalsdon",
   "description": "Mount tar archives as editable virtual workspace folders.",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.146.0",
     "node": ">=26"
@@ -27,11 +28,6 @@
   },
   "contributes": {
     "commands": [
-      {
-        "command": "vaultual.helloWorld",
-        "title": "Hello World",
-        "category": "Vaultual"
-      },
       {
         "command": "vaultual.mountArchive",
         "title": "Mount Archive",
@@ -60,7 +56,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "npm run typecheck && npm run format:check",
-    "package": "vsce package --allow-missing-repository --skip-license"
+    "package": "vsce package --allow-missing-repository"
   },
   "devDependencies": {
     "@openpgp/web-stream-tools": "0.3.1",

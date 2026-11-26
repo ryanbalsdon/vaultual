@@ -40,41 +40,15 @@ exports.run = async function run() {
   assert.ok(extension, 'VS Code must discover the development extension');
   assert.ok(
     extension.packageJSON.contributes.commands.some(
-      (command) => command.command === 'vaultual.helloWorld',
+      (command) => command.command === 'vaultual.mountArchive',
     ),
-    'The manifest must contribute the hello-world command',
+    'The manifest must contribute the Mount Archive command',
   );
 
-  // Invoking the contribution must activate the extension automatically.
-  // Dismiss the notification so the command can finish without user input.
-  const dismissal = setInterval(() => {
-    void vscode.commands.executeCommand('notifications.clearAll');
-  }, 100);
-  const timeout = setTimeout(() => {
-    rejectTimeout(new Error('Hello-world command timed out after 10 seconds'));
-  }, 10_000);
-  let rejectTimeout;
-  try {
-    await Promise.race([
-      vscode.commands.executeCommand('vaultual.helloWorld'),
-      new Promise((_, reject) => {
-        rejectTimeout = reject;
-      }),
-    ]);
-    assert.equal(
-      extension.isActive,
-      true,
-      'Command must activate the extension',
-    );
-    console.log('PASS: VS Code discovers, activates, and executes Vaultual');
-    await testArchiveWorkspace();
-  } finally {
-    clearInterval(dismissal);
-    clearTimeout(timeout);
-  }
+  await testArchiveWorkspace(extension);
 };
 
-async function testArchiveWorkspace() {
+async function testArchiveWorkspace(extension) {
   const directory = await fs.mkdtemp(
     path.join(os.tmpdir(), 'vaultual-integration-'),
   );
@@ -101,6 +75,11 @@ async function testArchiveWorkspace() {
       },
     );
     root = folder.uri;
+    assert.equal(
+      extension.isActive,
+      true,
+      'Command must activate the extension',
+    );
     const file = vscode.Uri.joinPath(root, 'hello.txt');
     const document = await vscode.workspace.openTextDocument(file);
     assert.equal(document.getText(), 'old');

@@ -15,9 +15,6 @@ export function activate(context: vscode.ExtensionContext): void {
         if (folder.uri.scheme === TAR_SCHEME) provider.unmount(folder.uri);
       }
     }),
-    vscode.commands.registerCommand('vaultual.helloWorld', async () => {
-      await vscode.window.showInformationMessage('Hello from Vaultual!');
-    }),
     vscode.commands.registerCommand(
       'vaultual.mountArchive',
       async (resource?: vscode.Uri) => {

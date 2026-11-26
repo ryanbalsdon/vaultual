@@ -2,6 +2,7 @@
 !dist/extension.cjs
 !package.json
 !README.md
+!LICENSE
 !CHANGELOG.md
 !THIRD_PARTY_NOTICES.md
 !node_modules/openpgp/package.json

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.0
 
 - Mount plaintext tar and gzip-compressed tar archives as editable workspace roots.
 - Rewrite complete archives on saves and filesystem mutations using serialized
@@ -8,6 +8,7 @@
 - Add archive, storage, provider, and extension-host tests.
 - Mount password-encrypted OpenPGP tar archives with a masked VS Code prompt
   and retain encryption when saving changes.
+- Remove the scaffold's `Vaultual: Hello World` command.
 
 ## 0.0.1
 

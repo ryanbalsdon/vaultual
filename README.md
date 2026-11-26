@@ -135,10 +135,7 @@ alongside the workspace files.
 ## Local packaging
 
 Run `npm run package`, then use **Extensions: Install from VSIX...** in VS Code.
-The project is private and unlicensed. The packaging command allows missing
-repository and license metadata for local development. Before Marketplace
-publication, choose a license, set the real `publisher` and repository metadata,
-and review the release contents with `npx vsce ls`.
+Review the release contents with `npx vsce ls`.
 
 ## References
 

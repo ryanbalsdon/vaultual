@@ -85,7 +85,6 @@ exports.createVSCode = function createVSCode() {
       },
     },
     window: {
-      showInformationMessage: async () => {},
       showErrorMessage: async () => {},
       showOpenDialog: async () => undefined,
     },
