@@ -1,7 +1,7 @@
 {
   "name": "vaultual",
   "displayName": "Vaultual",
-  "description": "A VS Code extension for a virtual workspace backed by a GPG-encrypted tar archive. Initial development skeleton.",
+  "description": "Mount tar archives as editable virtual workspace folders.",
   "version": "0.0.1",
   "private": true,
   "license": "UNLICENSED",
@@ -16,14 +16,37 @@
     "workspace"
   ],
   "main": "./dist/extension.cjs",
+  "activationEvents": [
+    "onFileSystem:vaultual"
+  ],
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": false
+    }
+  },
   "contributes": {
     "commands": [
       {
         "command": "vaultual.helloWorld",
         "title": "Hello World",
         "category": "Vaultual"
+      },
+      {
+        "command": "vaultual.mountArchive",
+        "title": "Mount Archive",
+        "category": "Vaultual"
       }
-    ]
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "vaultual.mountArchive",
+          "when": "resourceScheme == file && resourceFilename =~ /\\.(tar|tar\\.gz|tgz)$/i",
+          "group": "navigation@10"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
@@ -40,10 +63,14 @@
     "package": "vsce package --no-dependencies --allow-missing-repository --skip-license"
   },
   "devDependencies": {
+    "@types/node": "22.20.5",
     "@types/vscode": ">=1.74.0 <1.147.0",
     "@vscode/vsce": "latest",
     "esbuild": "0.28.2",
     "prettier": "latest",
     "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "modern-tar": "0.8.6"
   }
 }

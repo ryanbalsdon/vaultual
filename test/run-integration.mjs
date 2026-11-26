@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,11 +24,14 @@ const temporaryDirectory = await mkdtemp(
   path.join(os.tmpdir(), 'vaultual-test-'),
 );
 try {
+  const workspace = path.join(temporaryDirectory, 'workspace');
+  await mkdir(workspace);
   const env = { ...process.env };
   delete env.ELECTRON_RUN_AS_NODE;
   const child = spawn(
     executable,
     [
+      workspace,
       `--extensionDevelopmentPath=${root}`,
       `--extensionTestsPath=${path.join(root, 'test/integration/index.cjs')}`,
       `--user-data-dir=${path.join(temporaryDirectory, 'user-data')}`,

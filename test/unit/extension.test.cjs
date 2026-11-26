@@ -1,46 +1,21 @@
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
 const { test } = require('node:test');
-const vm = require('node:vm');
+const { loadSource } = require('../load-source.cjs');
+const { createVSCode } = require('../vscode.cjs');
 
 const manifest = require('../../package.json');
-const bundle = fs.readFileSync(
-  path.resolve(__dirname, '../..', manifest.main),
-  'utf8',
-);
-
 function loadExtension(showInformationMessage) {
-  const commands = new Map();
+  const vscode = createVSCode();
+  const commands = vscode.registeredCommands;
   const subscriptions = [];
-  const module = { exports: {} };
-  const vscode = {
-    commands: {
-      registerCommand(id, handler) {
-        assert.equal(commands.has(id), false, 'Command registered twice');
-        commands.set(id, handler);
-        return { dispose: () => commands.delete(id) };
-      },
-    },
-    window: { showInformationMessage },
-  };
-
-  vm.runInNewContext(bundle, {
-    module,
-    exports: module.exports,
-    require(id) {
-      assert.equal(id, 'vscode');
-      return vscode;
-    },
-  });
-
-  module.exports.activate({ subscriptions });
-  return { commands, subscriptions };
+  vscode.window.showInformationMessage = showInformationMessage;
+  loadSource('extension', vscode).activate({ subscriptions });
+  return { commands, subscriptions, vscode };
 }
 
 test('activation registers the command advertised in the manifest', () => {
   const { commands } = loadExtension(async () => undefined);
-  assert.equal(commands.size, 1);
+  assert.equal(commands.size, 2);
   assert.equal(commands.has('vaultual.helloWorld'), true);
   assert.equal(manifest.contributes.commands[0].command, 'vaultual.helloWorld');
 });
@@ -80,7 +55,7 @@ test('the command reports notification failures to its caller', async () => {
 
 test('context disposal unregisters the command', () => {
   const { commands, subscriptions } = loadExtension(async () => undefined);
-  assert.equal(subscriptions.length, 1);
+  assert.ok(subscriptions.length > 0);
   for (const subscription of subscriptions) subscription.dispose();
   assert.equal(commands.size, 0);
 });
