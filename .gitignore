@@ -6,6 +6,7 @@ dist/
 .DS_Store
 *.tar.gpg
 *.tar.gz.gpg
+!test/fixtures/pax.tar.gpg
 .env
 .env.*
 !.env.example

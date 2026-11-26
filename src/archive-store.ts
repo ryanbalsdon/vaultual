@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { Archive, ArchiveError, MAX_ARCHIVE_BYTES } from './archive';
+import type { ArchivePayload } from './archive-encryption';
 
 // The adapter keeps storage separate from the in-memory model and makes disk
 // failures and concurrent saves testable without changing the real filesystem.
@@ -73,14 +74,24 @@ export class ArchiveStore {
     private readonly storage: ArchiveStorage,
     public archive: Archive,
     private baseline: Uint8Array,
+    private readonly encrypt?: ArchivePayload['encrypt'],
   ) {}
 
   /** Loads the live tree when the provider first opens a new or restored mount. */
-  static async open(storage: ArchiveStorage): Promise<ArchiveStore> {
+  static async open(
+    storage: ArchiveStorage,
+    unlock?: (bytes: Uint8Array) => Promise<ArchivePayload>,
+  ): Promise<ArchiveStore> {
     const bytes = await storage.read();
+    const payload = unlock ? await unlock(bytes) : { bytes };
 
     // Keep the exact disk bytes as the baseline for the first conflict check.
-    return new ArchiveStore(storage, await Archive.decode(bytes), bytes);
+    return new ArchiveStore(
+      storage,
+      await Archive.decode(payload.bytes),
+      bytes,
+      payload.encrypt,
+    );
   }
 
   /** Persists a VS Code write, folder creation, deletion, or rename on this mount. */
@@ -89,7 +100,8 @@ export class ArchiveStore {
     const task = this.tail.then(async () => {
       const draft = this.archive.fork();
       change(draft);
-      const bytes = await draft.encode();
+      const payload = await draft.encode();
+      const bytes = this.encrypt ? await this.encrypt(payload) : payload;
       await this.storage.replace(this.baseline, bytes);
 
       // Publish only after persistence succeeds so reads and retries see a consistent snapshot.

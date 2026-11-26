@@ -6,6 +6,7 @@ const path = require('node:path');
 const { packTar, unpackTar } = require('modern-tar');
 const { loadSource } = require('../load-source.cjs');
 const { Archive, archivePath } = loadSource('archive');
+const { unlockArchive } = loadSource('archive-encryption');
 
 const bytes = (text) => new TextEncoder().encode(text);
 const text = (value) => new TextDecoder().decode(value);
@@ -14,26 +15,58 @@ const file = (name, body = 'original', extra = {}) => ({
   body: bytes(body),
 });
 
-test('reads and rewrites independent USTAR, PAX, GNU, and gzip fixtures', async () => {
-  for (const filename of ['ustar.tar', 'pax.tar', 'gnu.tar', 'pax.tar.gz']) {
-    const source = await fs.readFile(path.join(__dirname, '../fixtures', filename));
-    const archive = await Archive.decode(source);
-    assert.equal(
-      text(archive.get('/bin/run.sh').data),
-      '#!/bin/sh\necho portable\n',
-    );
-    assert.equal(archive.get('/empty').header.mode, 0o750);
-    assert.equal(archive.get('/bin/run.sh').header.mode, 0o751);
-    const roundtrip = await Archive.decode(await archive.encode());
-    assert.equal(roundtrip.compressed, filename.endsWith('.gz'));
-    assert.equal(roundtrip.get('/bin/run.sh').header.uid, 123);
-    assert.equal(roundtrip.get('/bin/run.sh').header.gid, 456);
-    assert.equal(roundtrip.get('/bin/run.sh').mtime, 1700000000000);
-    if (filename !== 'ustar.tar')
-      assert.equal(
-        text(roundtrip.get('/long/' + 'x'.repeat(300) + '.txt').data),
-        'long',
+test('reads and rewrites independent USTAR, PAX, GNU, and gzip fixtures', async (t) => {
+  const armorHeader = '-----BEGIN PGP MESSAGE-----';
+  for (const [filename, compressed = false, encrypted = false] of [
+    ['ustar.tar'],
+    ['pax.tar'],
+    ['gnu.tar'],
+    ['pax.tar.gz', true],
+    ['pax.tar.gpg', false, true],
+    ['pax.tgz.asc', true, true],
+  ]) {
+    await t.test(filename, async () => {
+      const requestPassword = async () => {
+        assert.ok(encrypted, 'Plaintext fixtures must open without a password');
+        return 'vaultual fixture password';
+      };
+      const source = await fs.readFile(
+        path.join(__dirname, '../fixtures', filename),
       );
+      const unlocked = await unlockArchive(source, filename, requestPassword);
+      assert.equal(Boolean(unlocked.encrypt), encrypted);
+      const archive = await Archive.decode(unlocked.bytes);
+      assert.equal(
+        text(archive.get('/bin/run.sh').data),
+        '#!/bin/sh\necho portable\n',
+      );
+      assert.equal(archive.get('/empty').header.mode, 0o750);
+      assert.equal(archive.get('/bin/run.sh').header.mode, 0o751);
+
+      const encoded = await archive.encode();
+      const rewritten = unlocked.encrypt
+        ? await unlocked.encrypt(encoded)
+        : encoded;
+      const armored =
+        text(rewritten.subarray(0, armorHeader.length)) === armorHeader;
+      assert.equal(armored, filename.endsWith('.asc'));
+      const reopened = await unlockArchive(
+        rewritten,
+        filename,
+        requestPassword,
+      );
+      assert.equal(Boolean(reopened.encrypt), encrypted);
+      const roundtrip = await Archive.decode(reopened.bytes);
+      assert.equal(roundtrip.compressed, compressed);
+      assert.equal(roundtrip.get('/bin/run.sh').header.uid, 123);
+      assert.equal(roundtrip.get('/bin/run.sh').header.gid, 456);
+      assert.equal(roundtrip.get('/bin/run.sh').mtime, 1700000000000);
+      if (filename !== 'ustar.tar')
+        assert.equal(
+          text(roundtrip.get('/long/' + 'x'.repeat(300) + '.txt').data),
+          'long',
+        );
+    });
   }
 });
 
@@ -126,10 +159,7 @@ test('inferring directories does not change explicit directory timestamps', asyn
 
 test('archives missing end markers are refused', async () => {
   const valid = await packTar([file('sample')]);
-  await assert.rejects(
-    Archive.decode(valid.slice(0, 1024)),
-    /truncated/,
-  );
+  await assert.rejects(Archive.decode(valid.slice(0, 1024)), /truncated/);
 });
 
 test('filesystem rules, nested moves, overwrites, and recursive deletes', async () => {

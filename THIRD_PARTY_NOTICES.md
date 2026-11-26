@@ -24,3 +24,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## OpenPGP.js
+
+The extension ships the unmodified OpenPGP.js 6.3.3 Node distribution as a
+replaceable module under the GNU Lesser General Public License, version 3 or
+later. The package includes the [LGPL](node_modules/openpgp/LICENSE) and
+[GPL](licenses/GPL-3.0.txt) license texts. The corresponding source is available
+from the [OpenPGP.js v6.3.3 release](https://github.com/openpgpjs/openpgpjs/releases/tag/v6.3.3).
+
+OpenPGP.js depends on [eckey-utils 0.7.14](https://github.com/tibetty/eckey-utils),
+distributed under the ISC license as declared in its package metadata.

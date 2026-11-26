@@ -10,7 +10,7 @@ const context = await esbuild.context({
   platform: 'node',
   format: 'cjs',
   target: 'node22',
-  external: ['vscode'],
+  external: ['vscode', 'openpgp'],
   minify: production,
   sourcemap: !production,
   sourcesContent: false,

@@ -13,7 +13,7 @@ exports.loadSource = function loadSource(name, vscode) {
       bundle: true,
       platform: 'node',
       format: 'cjs',
-      external: ['vscode'],
+      external: ['vscode', 'openpgp'],
       write: false,
     }).outputFiles[0].text;
     cache.set(filename, source);

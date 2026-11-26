@@ -4,3 +4,9 @@
 !README.md
 !CHANGELOG.md
 !THIRD_PARTY_NOTICES.md
+!node_modules/openpgp/package.json
+!node_modules/openpgp/LICENSE
+!node_modules/openpgp/dist/node/openpgp.min.cjs
+!node_modules/eckey-utils/package.json
+!node_modules/eckey-utils/index.js
+!licenses/GPL-3.0.txt

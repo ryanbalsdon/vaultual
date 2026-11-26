@@ -39,12 +39,10 @@ export function buildArchiveTree(
   }
   // Synthesizing missing ancestors must not alter timestamps of explicit
   // directory entries that happened to occur earlier in the archive.
-  for (const [name, entry] of explicitEntries)
-    tree.set(name, entry);
+  for (const [name, entry] of explicitEntries) tree.set(name, entry);
 
   // Directories inferred from file paths also count toward the in-memory entry limit.
-  if (tree.size > MAX_ENTRIES)
-    throw new Error('Too many archive entries.');
+  if (tree.size > MAX_ENTRIES) throw new Error('Too many archive entries.');
   return tree;
 }
 
@@ -87,7 +85,10 @@ export function touchEntry(tree: Map<string, Entry>, name: string): void {
 }
 
 /** Supplies required entries for reads and mutations with a provider-compatible error. */
-export function getEntry(tree: ReadonlyMap<string, Entry>, name: string): Entry {
+export function getEntry(
+  tree: ReadonlyMap<string, Entry>,
+  name: string,
+): Entry {
   const entry = tree.get(name);
   if (!entry) throw new ArchiveError('FileNotFound', name);
   return entry;
@@ -96,9 +97,7 @@ export function getEntry(tree: ReadonlyMap<string, Entry>, name: string): Entry 
 function validateTarEntry(header: TarHeader): string {
   // The mounted tree models only regular files and directories.
   if (header.type !== 'file' && header.type !== 'directory') {
-    throw new Error(
-      `Unsupported tar entry (${header.type}): ${header.name}`,
-    );
+    throw new Error(`Unsupported tar entry (${header.type}): ${header.name}`);
   }
 
   // PAX can flag a sparse file even when the decoded type says it is a regular file.

@@ -42,7 +42,7 @@
       "explorer/context": [
         {
           "command": "vaultual.mountArchive",
-          "when": "resourceScheme == file && resourceFilename =~ /\\.(tar|tar\\.gz|tgz)$/i",
+          "when": "resourceScheme == file && resourceFilename =~ /\\.(tar|tar\\.gz|tgz|gpg|pgp|asc)$/i",
           "group": "navigation@10"
         }
       ]
@@ -60,9 +60,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "npm run typecheck && npm run format:check",
-    "package": "vsce package --no-dependencies --allow-missing-repository --skip-license"
+    "package": "vsce package --allow-missing-repository --skip-license"
   },
   "devDependencies": {
+    "@openpgp/web-stream-tools": "0.3.1",
     "@types/node": "22.20.5",
     "@types/vscode": ">=1.74.0 <1.147.0",
     "@vscode/vsce": "latest",
@@ -71,6 +72,7 @@
     "typescript": "7.0.2"
   },
   "dependencies": {
-    "modern-tar": "0.8.6"
+    "modern-tar": "0.8.6",
+    "openpgp": "6.3.3"
   }
 }

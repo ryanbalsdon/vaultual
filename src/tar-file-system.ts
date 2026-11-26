@@ -2,9 +2,19 @@ import * as vscode from 'vscode';
 import { realpath } from 'node:fs/promises';
 import { posix } from 'node:path';
 import { ArchiveError, archivePath, type Archive, type Entry } from './archive';
+import {
+  ArchiveUnlockCancelled,
+  ENCRYPTED_ARCHIVE_SUFFIX,
+  unlockArchive,
+} from './archive-encryption';
 import { ArchiveStore, DiskArchiveStorage } from './archive-store';
 
 export const TAR_SCHEME = 'vaultual';
+
+interface Mount {
+  store: Promise<ArchiveStore>;
+  cancelled: boolean;
+}
 
 // Bridges VS Code's virtual workspace folders to the archive store that serves
 // reads from the current tree and persists edits to the backing file.
@@ -16,12 +26,13 @@ export class TarFileSystem
   >();
   /** VS Code listens for committed changes to refresh its views. */
   readonly onDidChangeFile = this.changes.event;
-  private readonly mounts = new Map<string, Promise<ArchiveStore>>();
+  private readonly mounts = new Map<string, Mount>();
 
   /** The Mount Archive command uses this to open the archive before adding its workspace folder. */
   async mount(source: vscode.Uri): Promise<vscode.Uri> {
     this.validateMountSource(source);
     const root = await this.mountRoot(source);
+    if (this.mounts.get(root.authority)?.cancelled) this.unmount(root);
     await this.store(root);
     return root;
   }
@@ -113,8 +124,13 @@ export class TarFileSystem
     if (source.scheme !== 'file') {
       throw new Error('Select an archive on the extension host filesystem.');
     }
-    if (!/\.(tar|tar\.gz|tgz)$/i.test(source.path)) {
-      throw new Error('Select a .tar, .tar.gz, or .tgz archive.');
+    if (
+      !/\.(tar|tar\.gz|tgz)$/i.test(source.path) &&
+      !ENCRYPTED_ARCHIVE_SUFFIX.test(source.path)
+    ) {
+      throw new Error(
+        'Select a tar, gzip-compressed tar, or OpenPGP-encrypted tar archive.',
+      );
     }
   }
 
@@ -180,16 +196,30 @@ export class TarFileSystem
     let mount = this.mounts.get(uri.authority);
     if (!mount) {
       const source = this.backingFile(uri.authority);
-      mount = ArchiveStore.open(new DiskArchiveStorage(source.fsPath));
+      const name = posix.basename(source.path);
+      const store = ArchiveStore.open(
+        new DiskArchiveStorage(source.fsPath),
+        (bytes) =>
+          unlockArchive(bytes, name, () =>
+            vscode.window.showInputBox({
+              title: `Unlock ${name}`,
+              prompt: 'Enter the OpenPGP archive password',
+              password: true,
+              ignoreFocusOut: true,
+            }),
+          ),
+      );
+      const opening = { store, cancelled: false };
       // Share an in-progress open and let later requests retry if it fails.
-      this.mounts.set(uri.authority, mount);
-      void mount.catch(() => {
-        // A remount may already have replaced the failed promise.
-        if (this.mounts.get(uri.authority) === mount)
-          this.mounts.delete(uri.authority);
+      this.mounts.set(uri.authority, opening);
+      mount = opening;
+      void store.catch((error: unknown) => {
+        // A cancelled unlock stays closed until explicitly mounted again.
+        if (error instanceof ArchiveUnlockCancelled) opening.cancelled = true;
+        else if (this.mounts.get(uri.authority) === opening) this.unmount(uri);
       });
     }
-    return mount;
+    return mount.store;
   }
 
   private backingFile(authority: string): vscode.Uri {
@@ -233,7 +263,9 @@ export class TarFileSystem
       if (old === entry) continue;
       events.push({
         uri: uri.with({ path: name }),
-        type: old ? vscode.FileChangeType.Changed : vscode.FileChangeType.Created,
+        type: old
+          ? vscode.FileChangeType.Changed
+          : vscode.FileChangeType.Created,
       });
     }
 

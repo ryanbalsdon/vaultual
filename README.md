@@ -1,21 +1,24 @@
 # Vaultual
 
-Vaultual mounts tar archives as editable, in-memory workspace folders. This
-first version uses plaintext archives; GPG encryption will be added later.
+Vaultual mounts tar archives as editable, in-memory workspace folders, including
+archives encrypted with an OpenPGP password.
 
 ## Mount an archive
 
-1. Right-click a `.tar`, `.tar.gz`, or `.tgz` file in Explorer and choose
-   **Vaultual: Mount Archive**. Alternatively, run that command from the Command
-   Palette and select an archive.
-2. Browse and edit its contents in the new **filename (archive)** workspace root.
-3. Save a file normally. Every save rewrites the entire original archive.
+1. Right-click a `.tar`, `.tar.gz`, `.tgz`, `.gpg`, `.pgp`, or `.asc` file in
+   Explorer and choose **Vaultual: Mount Archive**. You can also select the
+   archive from the Command Palette.
+2. For an OpenPGP archive, enter its password in the masked VS Code prompt.
+3. Browse and edit its contents in the new **filename (archive)** workspace root.
+   Every save rewrites the entire original archive. Encrypted archives are
+   re-encrypted with the same password before the replacement is written.
 
 Creating, renaming, and deleting files or directories also rewrites the archive.
 Compression is detected from the contents and retained when writing. Multiple
 archives can be mounted; mounting the same archive twice reuses its root. Saved
 workspace roots reopen their backing archive when VS Code restarts. Remove the
-workspace folder to unmount it; that leaves the archive on disk.
+workspace folder to unmount it. Vaultual keeps the password in memory while the
+archive is mounted and prompts again when the archive reopens.
 
 The archive stays in memory without extracting its files to disk. Saves are
 serialized per mounted archive: the complete replacement is written to a sibling
@@ -37,6 +40,10 @@ rename semantics; network filesystems may provide weaker guarantees.
   empty files, long and Unicode names, file permissions, ownership fields, and
   modification timestamps survive rewrites. Names remain case-sensitive on all
   operating systems.
+- Tar and gzip-compressed tar encrypted with a single OpenPGP password, for
+  example `gpg --symmetric archive.tar.gz`. Binary and ASCII-armored messages
+  retain their encoding on save. Recipient-key and signed OpenPGP messages are
+  outside the supported formats.
 - Symlinks, hard links, device files, FIFOs, PAX sparse files, duplicate paths,
   and unsafe paths are rejected when mounting.
 - **Warning:** Vaultual does not support unrecognized tar entry types, including
@@ -48,9 +55,9 @@ rename semantics; network filesystems may provide weaker guarantees.
   including files on a remote extension host. Browser-only extension hosts are
   not supported. The archive and its parent directory must permit replacement.
 
-Tar parsing and writing use [modern-tar](https://github.com/ayuhito/modern-tar),
-a TypeScript library with no dependencies or native addons. Gzip uses Node's
-built-in zlib. No external tar or GPG executable is needed.
+Tar parsing uses [modern-tar](https://github.com/ayuhito/modern-tar), gzip uses
+Node's built-in zlib, and encryption uses [OpenPGP.js](https://openpgpjs.org/).
+Vaultual includes its runtime dependencies for Windows, macOS, and Linux.
 
 ## Development
 
@@ -110,13 +117,14 @@ Tests are excluded from the packaged extension.
 
 - `src/extension.ts` registers the provider and commands and appends mounted
   archives to the workspace.
-- `src/archive.ts` holds the in-memory filesystem and tar/gzip codec.
+- `src/archive.ts` holds the in-memory filesystem, backed by the tar/gzip codec.
+- `src/archive-encryption.ts` unlocks OpenPGP archives and re-encrypts updates.
 - `src/archive-store.ts` serializes transactions and persists complete archives.
 - `src/tar-file-system.ts` adapts the model to VS Code's filesystem API.
 - `package.json` declares commands and Explorer menus. Activation is lazy for
   commands and restored `vaultual:` workspace roots.
-- `esbuild.mjs` bundles the Node extension, leaving the host-provided `vscode`
-  module external. The tar library is bundled into the extension.
+- `esbuild.mjs` bundles the Node extension and tar library. The VS Code host
+  provides `vscode`, and the VSIX includes OpenPGP.js as a separate module.
 - `.vscode/` contains debugging, build tasks, and editor settings.
 - `.vscodeignore` limits the VSIX contents to the production entry point and
   extension metadata/docs.
@@ -130,7 +138,7 @@ Run `npm run package`, then use **Extensions: Install from VSIX...** in VS Code.
 The project is private and unlicensed. The packaging command allows missing
 repository and license metadata for local development. Before Marketplace
 publication, choose a license, set the real `publisher` and repository metadata,
-and review the release contents with `npx vsce ls --no-dependencies`.
+and review the release contents with `npx vsce ls`.
 
 ## References
 
