@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2
+
+- Highlight password-encrypted archive editing in the Marketplace listing.
+
 ## 1.0.1
 
 - Add a Vaultual icon and a shorter Marketplace overview.
@@ -12,8 +16,3 @@
 - Add archive, storage, provider, and extension-host tests.
 - Mount password-encrypted OpenPGP tar archives with a masked VS Code prompt
   and retain encryption when saving changes.
-- Remove the scaffold's `Vaultual: Hello World` command.
-
-## 0.0.1
-
-- Add the initial extension skeleton and `Vaultual: Hello World` command.
