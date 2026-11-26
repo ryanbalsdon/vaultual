@@ -3,7 +3,8 @@
   "displayName": "Vaultual",
   "publisher": "ryanbalsdon",
   "description": "Mount tar archives as editable virtual workspace folders.",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "icon": "assets/icon.png",
   "private": true,
   "license": "MIT",
   "engines": {
@@ -56,7 +57,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "npm run typecheck && npm run format:check",
-    "package": "vsce package --allow-missing-repository"
+    "package": "vsce package --readme-path MARKETPLACE.md --allow-missing-repository"
   },
   "devDependencies": {
     "@openpgp/web-stream-tools": "0.3.1",

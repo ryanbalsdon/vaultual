@@ -135,7 +135,8 @@ alongside the workspace files.
 ## Local packaging
 
 Run `npm run package`, then use **Extensions: Install from VSIX...** in VS Code.
-Review the release contents with `npx vsce ls`.
+The VSIX uses `MARKETPLACE.md` for its overview. Review the release contents
+with `npx vsce ls --readme-path MARKETPLACE.md`.
 
 ## References
 

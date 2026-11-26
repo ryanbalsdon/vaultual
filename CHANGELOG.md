@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- Add a Vaultual icon and a shorter Marketplace overview.
+
 ## 1.0.0
 
 - Mount plaintext tar and gzip-compressed tar archives as editable workspace roots.

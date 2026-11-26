@@ -1,7 +1,8 @@
 **
 !dist/extension.cjs
 !package.json
-!README.md
+!MARKETPLACE.md
+!assets/icon.png
 !LICENSE
 !CHANGELOG.md
 !THIRD_PARTY_NOTICES.md
